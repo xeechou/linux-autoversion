@@ -3,33 +3,22 @@
 
 #So we will have a clean src tree
 pkgbase=linux-test
-_kernel_bin=kernel_build
-
-#the variable you have to provide
+#_kernel_bin=kernel_build
 _builddir=kernel_build
-kernel_src_dir='/home/developer/Courses/kernel-base'
+kernel_src_dir='/home/developer/Misc/linux'
 _srcname=kernel_tree
-#end the variable you have to provide
-
-pkgver=3.8.1
+pkgver=3.19rc1
 pkgrel=1
 pkgdesc="The Linux kernel and modules"
-depends=('coreutils' 'linux-firmware' 'kmod' 'mkinitcpio>=0.7')
-makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc')
-optdepends=('crda: to set the correct wireless channels of your country')
-provides=("kernel26${_kernelname}=${pkgver}")
-conflicts=("kernel26${_kernelname}")
-replaces=("kernel26${_kernelname}")
 arch=('i686' 'x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
 
 source=(#if we provide this, means kernel compile progress is already done
-	"${_kernel_bin}.tar.xz"
+	#"${_kernel_bin}.tar.xz"
 	'linux.preset'
 	)
-sha256sums=('65847bc847344434657db729d2dde4a408e303ea29ae1409520cecee8da6fc3d'
-            '2c2e8428e2281babcaf542e246c2b63dea599abb7ae086fa482081580f108a98')
+sha256sums=('2c2e8428e2281babcaf542e246c2b63dea599abb7ae086fa482081580f108a98')
 
 #this one strip the linux off
 _kernelname=${pkgbase#linux}
@@ -38,13 +27,16 @@ prepare() {
   #build dir has to be the same as kernel_bin files, then builddir is created
   #automatically by tar
   if [ "${kernel_src_dir}" == "" ];then
+    echo "please provide kernel src tree for compilation"
     return 1
   fi
 
   #provide kernel source tree for compile and move modules
   ln -s ${kernel_src_dir} ${srcdir}/${_srcname}
+  cd "${srcdir}/${_srcname}"
 
-  mkdir -p "${srcdir}/${_srcname}"
+
+  #mkdir -p "${srcdir}/${_srcname}"
 
   #we need to check here if there exist kernel bin files
   if [ "${_kernel_bin}" == "" ]; then 
@@ -67,6 +59,12 @@ build() {
 _package() {
   #we dont need to worry about mkinitcpio, depmod thing, They are done by
   #install script, we need to provide a preset and install file instead.
+  depends=('coreutils' 'linux-firmware' 'kmod' 'mkinitcpio>=0.7')
+  makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc')
+  optdepends=('crda: to set the correct wireless channels of your country')
+  provides=("kernel26${_kernelname}=${pkgver}")
+  conflicts=("kernel26${_kernelname}")
+  replaces=("kernel26${_kernelname}")
   
   #we build kernel objs on _builddir, and install them in pkgdir
   #install binary files, this means we have a compiled binary tree
@@ -126,7 +124,6 @@ _package() {
   # add vmlinux
   install -D -m644 "${srcdir}/${_builddir}/"vmlinux "${pkgdir}/usr/lib/modules/${_kernver}/build/vmlinux" 
 }
-
 pkgname=("${pkgbase}")
 for _p in ${pkgname[@]}; do
   eval "package_${_p}() {
